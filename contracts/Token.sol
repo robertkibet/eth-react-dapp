@@ -7,12 +7,14 @@ contract Token {
     string public name = "Nader Dabit Token"; // give the token a name
     string public symbol = "NDT"; /// symbol of the token
     uint256 public totalSupply = 1000000; // supply of the token
+    address public owner;
     mapping(address => uint256) balances; // mapping of address to balance, like an object in javascript, key is address and value is of type uint
 
     constructor() {
         // balance of the person that deployed the contract to be equal to the total supply set above
         // msg.sender is set automatically to be available in the context of that contract
         balances[msg.sender] = totalSupply;
+        owner = msg.sender;
     }
 
     // transfer to an address a number of tokens

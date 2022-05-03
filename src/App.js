@@ -2,13 +2,17 @@ import * as React from "react";
 import logo from "./logo.svg";
 import {ethers} from "ethers";
 import Greeter from "./artifacts/contracts/Greeter.sol/Greeter.json";
+import Token from "./artifacts/contracts/Token.sol/Token.json";
 
 import "./App.css";
 
-const greeterAddress = "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512";
+const greeterAddress = "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0";
+const tokenAddress = "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9";
 
 function App() {
   const [greeting, setGreetingValue] = React.useState("");
+  const [amount, setAmount] = React.useState(0);
+  const [userAccount, setUserAccount] = React.useState("");
 
   const fetchGreeting = async () => {
     //check if window.ethereum is available
@@ -27,6 +31,45 @@ function App() {
       } catch (error) {
         console.log("error: ", error);
       }
+    }
+  };
+
+  const getBalance = async () => {
+    //check if window.ethereum is available
+    if (typeof window.ethereum !== "undefined" && window.ethereum) {
+      // ensure wallet is connected
+      // get available accounts
+      const [account] = await window.ethereum.request({
+        method: "eth_requestAccounts",
+      });
+
+      //setup provider
+      const provider = new ethers.providers.Web3Provider(window.ethereum);
+      //setup contract
+      const contract = new ethers.Contract(tokenAddress, Token.abi, provider);
+      //get balance
+      const balance = await contract.balanceOf(account);
+      //log balance
+      console.log("balance is ", balance.toString());
+    }
+  };
+
+  const sendCoins = async () => {
+    //check if window.ethereum is available
+    if (typeof window.ethereum !== "undefined" && window.ethereum) {
+      // get access to wallet
+      await requestAccount();
+      // create a new signer so that we can actually write data to blockchain
+      const provider = new ethers.providers.Web3Provider(window.ethereum);
+      const signer = provider.getSigner();
+      // create new instance of contract and pass the signer
+      const contract = new ethers.Contract(tokenAddress, Token.abi, signer);
+      // send the coins, pass the account and the amount
+      const tx = await contract.transfer(userAccount, amount);
+      // wait for it to succeed
+      await tx.wait();
+      // do something here
+      console.log(`Sent ${amount} tokens to ${userAccount}`);
     }
   };
 
@@ -53,21 +96,46 @@ function App() {
 
   return (
     <div className="App">
-      <h3>Simple Ethereum Greeting</h3>
-      <div className="actions">
-        <button type="button" onClick={fetchGreeting}>
-          Fetch Greeting
-        </button>
-        <button type="button" onClick={setGreeting}>
-          Set Greeting
-        </button>
+      <div className="wrapper">
+        <h5>Basic greeting</h5>
+        <div className="actions">
+          <button type="button" onClick={fetchGreeting}>
+            Fetch Greeting
+          </button>
+          <button type="button" onClick={setGreeting}>
+            Set Greeting
+          </button>
+        </div>
+        <input
+          value={greeting}
+          onChange={(e) => setGreetingValue(e.target.value)}
+          placeholder="Enter greeting"
+          required
+        />
       </div>
-      <input
-        value={greeting}
-        onChange={(e) => setGreetingValue(e.target.value)}
-        placeholder="Enter greeting"
-        required
-      />
+      <div className="wrapper">
+        <h5>Send coins and get balance</h5>
+        <div className="actions">
+          <button type="button" onClick={getBalance}>
+            Get Balance
+          </button>
+          <button type="button" onClick={sendCoins}>
+            Send Coins
+          </button>
+        </div>
+        <div className="inputs">
+          <input
+            onChange={(e) => setUserAccount(e.target.value)}
+            placeholder="Account ID"
+            required
+          />
+          <input
+            onChange={(e) => setAmount(e.target.value)}
+            placeholder="Amount"
+            required
+          />
+        </div>
+      </div>
     </div>
   );
 }
